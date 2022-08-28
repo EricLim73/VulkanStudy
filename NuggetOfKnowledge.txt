@@ -1,0 +1,4 @@
+[20220828]
+#Push Constant
+    - Small constant data that can be transfered to shader via commandBuffers rather than "writes to memory || copyCommands"  
+    
