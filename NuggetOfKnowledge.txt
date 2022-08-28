@@ -1,4 +1,58 @@
 [20220828]
 #Push Constant
     - Small constant data that can be transfered to shader via commandBuffers rather than "writes to memory || copyCommands"  
-    
+    - BUT only 128 bytes of memory guarantee to be used for push constant 
+        => "logicalDevice.properties.limits.maxPushConstantSize" shows max memory for user device
+    - Memory limit for "Push Constant" is universal across shaders => single 128 byte for every shader
+        => so you can do stuff like "64byte for vertex" & "64byte for fragment" shader
+    - "Push Constant" contains...
+        =>  StageFlags : which shader can use this PushConstant
+            offset  : (must be multiple of 4) offset of where PushConstant starts
+            Size :  size of PushConstant
+
+            ex) This is for explaination sake -> its much easier to hold everything in 1 struct
+                struct PushConst_Vert{
+                    stage = Vertex;
+                    offset = 0;
+                    size = 64;
+                }
+                struct PushConst_Frag{
+                    stage = Fragment;
+                    offset = 64;
+                    size = 64;
+                }
+    -   Use "layout(push_constant) uniform [Name]{ ... }[name];" inside shader to use the given push constant
+        Name is not an issue BUT u should match the memory Layout same as the input PushConstant(no shit sherlock)
+    -   PushConstant and Uniform with some other dataType follows Memory Alignment Rules specified for SPIR-Vertex
+        For Example...
+            struct SimplePushConstantData{
+                glm::vec2 offset;   //  for position offset
+                glm::vec3 color;    //  for color
+            };
+        ->  this struct currently has 4,4,4,4,4 byte layout packed(1st2nd for offset, rest for color)
+            BUT bc of Aligment Rules, any (3,4) vector should follow 4times its component memory size
+                                        (2) vector should follow 2*its component memory size
+            +   structure should layout as [largest memory size of member variable * number of memory variable]
+
+            So in this case, offset has to be 8byte(2*4byte) & color has to be 16 bytes(4byte * 4) 
+                                +   its struct => largest(16byte) * 2(member variable) = 16*16 size layout
+            => 4,4,-,-,4,4,4,-  is what shader reads from its pushConstant
+
+            2offset value goes right in. HOWEVER the RG value will go to that padding space and B value will
+            go to the fisrt "4" byte space, which represents Red. => x,y,[r],[g], b,-,- ([]gets ignored)
+            so if you tried to set color to ur liking, it is going to fuck up the presentation
+        To avoid this, with C++11 feature "alignas(x)", you can add padding byte for member variable layout
+            struct SimplePushConstantData{
+                glm::vec2 offset;
+                alignas(16) glm::vec3 color; -> this adds two 4bytes befor color to fill up 4*4byte for offset    
+            };
+        "alignas(x)" has some rules, 
+            X should be larger than 1   /   X should be multiple of 2 (2, 4, 8, 16, ...)
+    ##  Conclusion
+        -pro:   GOOD for small fraquently updated data + easy to implement
+        -cons:  limitation in size + is tied to drawCall => when packing several models in 1 vertexBuffer to draw them with 1 draw called
+                                                            push constant cant interact differently for each model, but only same pushConstant 
+                                                            for every vertex data
+        Most used in storing Transformation
+
+                                                        

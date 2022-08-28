@@ -1,8 +1,17 @@
 #include "App.h"
+#include "core.h"
+
 #include <stdexcept>
 #include <array>
 
 namespace VULKVULK{
+
+//  Push Constant -> PushConstant & Uniform(and some other data type) in vulkan need to follow alignment rules
+struct SimplePushConstantData{
+    glm::vec2 offset;   //  for position offset
+    alignas(16) glm::vec3 color;    //  for color
+};
+
 
 App::App(){
     loadModels();
@@ -27,12 +36,17 @@ void App::run(){
 
 
 void App::createPipelineLayout(){
+    VkPushConstantRange pushConstantRange{};
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    pushConstantRange.offset = 0;   //  for if your using pushConstant range seperatly for shaders
+    pushConstantRange.size = sizeof(SimplePushConstantData);
+    
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 0;
     pipelineLayoutInfo.pSetLayouts = nullptr;   //  pass data other than vertex data to our shaders(ex. texture, uniform buffer)
-    pipelineLayoutInfo.pushConstantRangeCount = 0;
-    pipelineLayoutInfo.pPushConstantRanges = nullptr;   //  efficiently push small data to our shader
+    pipelineLayoutInfo.pushConstantRangeCount = 1;
+    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;   //  efficiently push small data to our shader
     if(vkCreatePipelineLayout(myDevice.device(), &pipelineLayoutInfo, nullptr, &myPipelineLayout) != VK_SUCCESS){
         throw std::runtime_error("Failed to create pipeline layout");
     }
@@ -130,7 +144,10 @@ void App::loadModels() {
 
 //  Now we record our commandBuffer every frame
 void App::recordCommandBuffer(int imageIndex){
-            //  set recording
+        static int frame = 0;
+        frame = (frame + 1) % 1000; //  loop every 1000 frame
+        
+        //  set recording
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         
@@ -183,7 +200,17 @@ void App::recordCommandBuffer(int imageIndex){
 
         //  Draw Command
         myModel->bind(myCommandBuffers[imageIndex]);
-        myModel->draw(myCommandBuffers[imageIndex]);
+        for(int i = 0; i < 4; ++i){
+            SimplePushConstantData push{};
+            push.offset = {-0.5f + frame * 0.002f, -0.4f + i * 0.25f};
+            push.color = {0.0f, 0.0f, 0.2f + 0.2f * i};
+
+            vkCmdPushConstants(myCommandBuffers[imageIndex], myPipelineLayout,
+                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                            0, sizeof(SimplePushConstantData), &push);
+
+            myModel->draw(myCommandBuffers[imageIndex]);
+        }
 
 
         // End Recording -> first end renderPass
