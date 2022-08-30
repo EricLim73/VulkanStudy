@@ -142,14 +142,28 @@ void App::loadGameObjects() {
     };
     auto model = std::make_shared<Model>(myDevice, vertices);
 
-    auto triangle = GameObject::createGameObject();
-    triangle.model = model;
-    triangle.color = {0.1f, 0.4f, 0.5f};
-    triangle.transform2d.translation.x = 0.2f;
-    triangle.transform2d.scale = {2.0f, 0.5f};
-    triangle.transform2d.rotation = 0.25f * glm::two_pi<float>();   //  360/4 = 90 rotation
+    std::vector<glm::vec3> colors{
+      {1.f, .7f, .73f},
+      {1.f, .87f, .73f},
+      {1.f, 1.f, .73f},
+      {.73f, 1.f, .8f},
+      {.73, .88f, 1.f}  //
+    };
+    for (auto& color : colors) {
+        color = glm::pow(color, glm::vec3{2.2f});
+    }
 
-    myGameObjects.push_back(std::move(triangle));   //  default move operator is used for this purpose inside "GameObject.h"
+    for(int i = 0; i < 40; ++i){
+        auto triangle = GameObject::createGameObject();
+        triangle.model = model;
+        triangle.color = colors[i % colors.size()]; 
+        triangle.transform2d.scale =  glm::vec2(.5f) + i * 0.025f;
+        triangle.transform2d.rotation = i * 0.25f * glm::pi<float>();   //  180/4+i
+
+        myGameObjects.push_back(std::move(triangle));   //  default move operator is used for this purpose inside "GameObject.h"
+    }
+
+
 
 }
 
@@ -214,14 +228,26 @@ void App::recordCommandBuffer(int imageIndex){
 }
 
 void App::renderGameObjects(VkCommandBuffer commandBuffer){
+    int i = 0;
+    for (auto& obj : myGameObjects) {
+      i += 1;
+      obj.transform2d.rotation =
+          glm::mod<float>(obj.transform2d.rotation + 0.001f * i, 2.f * glm::pi<float>());
+    }
+
+    static float time = 0.0f;
+    const float s = glm::sin(time);
+    const float c = glm::cos(time);
+    glm::mat2 rotationMat{{c, s}, {-s, c}};
+
 
     myPipeline->bind(commandBuffer);
 
     //  loop through every gameObject
     for(auto& gameObject : myGameObjects){
         SimplePushConstantData push{};
-        push.offset = gameObject.transform2d.translation;
-        push.color = gameObject.color;
+        push.offset = gameObject.transform2d.translation + glm::vec2(0.5f, 0.0f) * rotationMat ;
+        push.color = gameObject.color; 
         push.transform = gameObject.transform2d.mat2(); 
         vkCmdPushConstants(commandBuffer, myPipelineLayout,
                         VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -229,10 +255,9 @@ void App::renderGameObjects(VkCommandBuffer commandBuffer){
         gameObject.model->bind(commandBuffer);
         gameObject.model->draw(commandBuffer);
     }
-
+    time += 0.016f;
 
 }
-
 
 void App::drawFrame(){
     uint32_t imageIndex = 0;

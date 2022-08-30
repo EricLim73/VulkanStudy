@@ -22,7 +22,7 @@ struct Transform2DComponent{
         const float c = glm::cos(rotation);
         glm::mat2 rotationMat{{c, s}, {-s, c}};
 
-        return rotationMat * scaleMat;
+        return rotationMat * scaleMat;  // order matters
     }
 };
 
@@ -40,7 +40,7 @@ public:
     GameObject& operator=(GameObject&&) = default;
     
     id_t GetId() const {return id;}
-
+ 
     std::shared_ptr<Model> model{}; //  multiple game object can use same model -> model should be shared for convinience
     glm::vec3 color{};
     Transform2DComponent transform2d;
