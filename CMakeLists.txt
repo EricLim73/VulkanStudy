@@ -15,6 +15,7 @@ add_executable(${PROJECT_NAME}
     src/Render/swapChain.cpp    src/Render/swapChain.h
     src/Render/device.cpp       src/Render/device.h
     src/Render/model.cpp       src/Render/model.h
+    src/GameAsset/gameObject.cpp       src/GameAsset/gameObject.h
 
 )
 

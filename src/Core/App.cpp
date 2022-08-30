@@ -8,13 +8,14 @@ namespace VULKVULK{
 
 //  Push Constant -> PushConstant & Uniform(and some other data type) in vulkan need to follow alignment rules
 struct SimplePushConstantData{
+    glm::mat2 transform{1.f};
     glm::vec2 offset;   //  for position offset
-    alignas(16) glm::vec3 color;    //  for color
-};
+    alignas(16) glm::vec3 color;    //  for color 
+}; 
 
 
 App::App(){
-    loadModels();
+    loadGameObjects();
     createPipelineLayout();
     recreateSwapChain(); //  createPipeline(); is called from this function
     createCommandBuffers();
@@ -40,7 +41,7 @@ void App::createPipelineLayout(){
     pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
     pushConstantRange.offset = 0;   //  for if your using pushConstant range seperatly for shaders
     pushConstantRange.size = sizeof(SimplePushConstantData);
-    
+ 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 0;
@@ -132,21 +133,28 @@ void sierpinski(
     }
 }
 
-void App::loadModels() {
+void App::loadGameObjects() {
     //sierpinski(vertices, 5, {-0.5f, 0.5f}, {0.5f, 0.5f}, {0.0f, -0.5f});
     std::vector<Model::Vertex> vertices{
         {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}}, 
         {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}}, 
         {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
     };
-    myModel = std::make_unique<Model>(myDevice, vertices);
+    auto model = std::make_shared<Model>(myDevice, vertices);
+
+    auto triangle = GameObject::createGameObject();
+    triangle.model = model;
+    triangle.color = {0.1f, 0.4f, 0.5f};
+    triangle.transform2d.translation.x = 0.2f;
+    triangle.transform2d.scale = {2.0f, 0.5f};
+    triangle.transform2d.rotation = 0.25f * glm::two_pi<float>();   //  360/4 = 90 rotation
+
+    myGameObjects.push_back(std::move(triangle));   //  default move operator is used for this purpose inside "GameObject.h"
+
 }
 
 //  Now we record our commandBuffer every frame
 void App::recordCommandBuffer(int imageIndex){
-        static int frame = 0;
-        frame = (frame + 1) % 1000; //  loop every 1000 frame
-        
         //  set recording
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -195,22 +203,7 @@ void App::recordCommandBuffer(int imageIndex){
         vkCmdSetScissor(myCommandBuffers[imageIndex], 0, 1, &scissor);
 
 
-        //  Bind pipeline
-        myPipeline->bind(myCommandBuffers[imageIndex]);
-
-        //  Draw Command
-        myModel->bind(myCommandBuffers[imageIndex]);
-        for(int i = 0; i < 4; ++i){
-            SimplePushConstantData push{};
-            push.offset = {-0.5f + frame * 0.002f, -0.4f + i * 0.25f};
-            push.color = {0.0f, 0.0f, 0.2f + 0.2f * i};
-
-            vkCmdPushConstants(myCommandBuffers[imageIndex], myPipelineLayout,
-                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                            0, sizeof(SimplePushConstantData), &push);
-
-            myModel->draw(myCommandBuffers[imageIndex]);
-        }
+        renderGameObjects(myCommandBuffers[imageIndex]);
 
 
         // End Recording -> first end renderPass
@@ -219,6 +212,27 @@ void App::recordCommandBuffer(int imageIndex){
             throw std::runtime_error("Failed to end command buffer recording");
         }
 }
+
+void App::renderGameObjects(VkCommandBuffer commandBuffer){
+
+    myPipeline->bind(commandBuffer);
+
+    //  loop through every gameObject
+    for(auto& gameObject : myGameObjects){
+        SimplePushConstantData push{};
+        push.offset = gameObject.transform2d.translation;
+        push.color = gameObject.color;
+        push.transform = gameObject.transform2d.mat2(); 
+        vkCmdPushConstants(commandBuffer, myPipelineLayout,
+                        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                        0, sizeof(SimplePushConstantData), &push);
+        gameObject.model->bind(commandBuffer);
+        gameObject.model->draw(commandBuffer);
+    }
+
+
+}
+
 
 void App::drawFrame(){
     uint32_t imageIndex = 0;

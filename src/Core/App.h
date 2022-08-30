@@ -5,7 +5,8 @@
 #include "../Render/pipeline.h"
 #include "../Render/device.h"
 #include "../Render/swapChain.h"
-#include "../Render/model.h"
+//  #include "../Render/model.h"
+#include "../GameAsset/gameObject.h"    //  -> contains model.h
 
 #include <memory>
 #include <vector>
@@ -24,7 +25,8 @@ class App{
 
         void run();
     private:
-        void loadModels();
+        //void loadModels();
+        void loadGameObjects();
         void createPipelineLayout();
         void createPipeline();
         void createCommandBuffers();
@@ -32,6 +34,8 @@ class App{
         void drawFrame();
         void recreateSwapChain();
         void recordCommandBuffer(int imageIndex);
+        void renderGameObjects(VkCommandBuffer commandBuffer);
+
 
         Window myWindow{WIDTH, HEIGHT, "Hello Vulkan"};
         Device myDevice{myWindow};
@@ -41,7 +45,9 @@ class App{
         std::unique_ptr<Pipeline> myPipeline = nullptr;
         VkPipelineLayout myPipelineLayout;    
         std::vector<VkCommandBuffer> myCommandBuffers;
-        std::unique_ptr<Model> myModel = nullptr;
+        //std::unique_ptr<Model> myModel = nullptr;
+        std::vector<GameObject> myGameObjects;
+
 
 };
 

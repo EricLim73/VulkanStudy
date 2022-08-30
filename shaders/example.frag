@@ -6,6 +6,7 @@ layout (location = 0) out vec4 OutColor;
 
 //  push constant should be declared to all shaders that use them 
 layout(push_constant) uniform Push{
+    mat2 transform;
     vec2 offset;
     vec3 color;
 }push;
