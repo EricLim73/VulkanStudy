@@ -9,13 +9,15 @@ project(${PROJECT_NAME})
 add_executable(${PROJECT_NAME} 
     VulkApp/main.cpp
     src/Core/core.h  
-    src/Core/App.cpp            src/Core/App.h
-    src/Render/window.cpp       src/Render/window.h
-    src/Render/pipeline.cpp     src/Render/pipeline.h
-    src/Render/swapChain.cpp    src/Render/swapChain.h
-    src/Render/device.cpp       src/Render/device.h
-    src/Render/model.cpp       src/Render/model.h
-    src/GameAsset/gameObject.cpp       src/GameAsset/gameObject.h
+    src/Core/App.cpp                    src/Core/App.h
+    src/GameAsset/gameObject.cpp        src/GameAsset/gameObject.h
+    src/Render/window.cpp               src/Render/window.h
+    src/Render/pipeline.cpp             src/Render/pipeline.h
+    src/Render/swapChain.cpp            src/Render/swapChain.h
+    src/Render/device.cpp               src/Render/device.h
+    src/Render/model.cpp                src/Render/model.h
+    src/Render/renderer.cpp             src/Render/renderer.h
+    src/Render/simpleRenderSystem.cpp   src/Render/simpleRenderSystem.h
 
 )
 

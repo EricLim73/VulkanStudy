@@ -58,3 +58,62 @@
 
 
 [20220829]
+    EntitySystem -> data oriented system to structure gameObjects
+    glm::mat =>                                                                                             X     O
+        GLM reads in coloum not in row. => so it read "scale.x & 0.0f inside second{}" as 1st input     1| 123   14
+        ex> [1st row] 1 2 3 [2nd row] 4 5 6 => is not 3X2 mat, its 2X3 mat                              2| 456   25
+        so if you want to add z axis then you should add 1 value to each row, not adding new {}         3|       36
+
+
+[20220831]
+    Rendering System -> Current [App] has too much functionality inside itself
+    we will pop off those functionality and make a "Renderer" which will be responsible for ALL Rendering operation
+        For Renderer -> 
+            drawFrame, swapChain Creation, CommandBuffer Creation
+        is needed so it can focus on "Drawing thing on surface"
+
+        For "Simple Render System" ->
+            pipeline, pipelineLayout, pushConstant, renderGameObject
+        is needed so it configures what is going to happen and get drawn when passed through to [Renderer]
+
+    Typically only 1 Renderer exists and many RenderSystem uses that renderer to render out what they returned
+        [Renderer]
+            What we did was with [Renderer] => we divided "drawFrame" into 2 parts
+            From start of "drawFrame" ~ just the beginning of "recordCommandBuffer" AS [beginFrame]
+            From the ending bit of "recordCommandBuffer"(for ending commandBuffer) ~ rest of "drawFrame" AS [endFrame]
+
+            Same goes to "recordCommandBuffer" => divided to 2parts
+            ->  from start all the way to "recordGameObject" as [beginSwapChainRenderPass]
+            ->  "vkCmdEndRenderPass" as [endSwapChainRenderPass]
+
+            so inside application.cpp -> you can 
+                1. "if(commandBuffer = beginFrame())" to return the commandBuffer AND checking if recreating swapChain is needed at the same time
+                2.  "beginSwapChainRenderPass()" + [ANY RENDER SYSTEM TO RECORD ITS OPERATION] + "endSwapChainRenderPass"
+                3.  "endFrame()"
+            in the future we can do post-processing or any other pipeline operation for any sub-rendering system just by swaping the [...] part
+
+        [SimpleRenderSystem]
+            We will not save renderPass as member variable bc we will only use renderPass for pipeline creation and our renderSystem's lifeCycle is not
+            tied to renderPass(TLDR: we dont need em once pipeline is made)
+        
+                when creating fetch renderPass from Renderer and during loop call "renderGameObjects" to render(record gameObject to commandBuffer)
+        
+        We refactored the SwapChain class to check its format with given swapChain. We pass in previous swapChain and see if recreated swapChain 
+        has the same image&depth Format ->  if yes that means recreated swapChain is compatible
+                                        ->  if no that means its not compatible and you would have to recreate pipeline(which depends on swapChain's renderPass)
+
+
+        We also refactor so that we no longer create 1-1 relationship with commandBuffer & FrameBuffer
+        MAX_FRAMES_IN_FLIGHT determines how many FrameBuffer runs during submittingBuffers
+        currently its 2 -> 1 for acquiring AND 1 for rendering(drawing inside image). When 1 FrameBuffer is done rendering it is send 
+        so it can be presented. Then the other 1 framebuffer will start rendering following with new framebuffer acquiring imageIndex
+        so constantly 2 framebuffer works while 1 framebuffer is presented and returns back to swapChain(is its tripleBuffering)
+
+        You can figure out that its a dumb move to creat additional commandBuffer for that 1 frameBuffer that is getting returned  to swapChain
+        which does nothing until its turn to acquire imageIndex -> only 2 FrameBuffer is needed per frame == WE ONLY NEED 2 COMMANDBUFFER PRE FrameBuffer
+
+        So when creating CommandBuffer we resize our commandBuffer storing vector to MAX_FRAMES_IN_FLIGHT. 
+        "GetCurrentCommandBuffer()" will return myCommandBuffer[currentFrameBuffer] not currentImageIndex
+        Recording commandBuffers dont need much change bc we already record them per "Frame"
+        TLDR would be we only make 2 slots for CommandBuffer and we use them 1 after another loop through those slots and recording commandBuffers
+        every frame. 

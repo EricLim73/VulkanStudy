@@ -49,7 +49,6 @@ private:
     GameObject(id_t objId) : id(objId) {} 
 
     id_t id;    //  Each GameObject has unique ID specifing them 
-
 };
 
 
