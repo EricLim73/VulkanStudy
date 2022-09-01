@@ -66,7 +66,7 @@ std::vector<VkVertexInputAttributeDescription> Model::Vertex::getAttributeDescri
     std::vector<VkVertexInputAttributeDescription> attributeDescription(2);
     attributeDescription[0].binding = 0;    
     attributeDescription[0].location = 0;   //  location inside vertex shader(position)
-    attributeDescription[0].format = VK_FORMAT_R32G32_SFLOAT;   //  indicating 2 float variable
+    attributeDescription[0].format = VK_FORMAT_R32G32B32_SFLOAT;   //  indicating 2 float variable
     attributeDescription[0].offset = offsetof(Vertex, position);
 
     attributeDescription[1].binding = 0;    

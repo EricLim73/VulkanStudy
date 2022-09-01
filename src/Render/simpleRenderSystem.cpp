@@ -7,9 +7,9 @@ namespace VULKVULK{
 
 //  Push Constant -> PushConstant & Uniform(and some other data type) in vulkan need to follow alignment rules
 struct SimplePushConstantData{
-    glm::mat2 transform{1.f};
-    glm::vec2 offset;   //  for position offset
+    glm::mat4 transform{1.f};
     alignas(16) glm::vec3 color;    //  for color 
+    //  deleting offset bc we baked that inside gameObject struct
 }; 
 
 
@@ -17,6 +17,7 @@ SimpleRenderSystem::SimpleRenderSystem(Device& device, VkRenderPass renderPass) 
     createPipelineLayout();
     createPipeline(renderPass);   
 }
+
 SimpleRenderSystem::~SimpleRenderSystem(){
     vkDestroyPipelineLayout(myDevice.device(), myPipelineLayout, nullptr);
     //  pipeline gets destoryed with its deconstructor->RAII
@@ -60,7 +61,8 @@ void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::v
     int i = 0;
     for (auto& obj : gameObjects) {
         i += 1;
-        obj.transform2d.rotation = glm::mod<float>(obj.transform2d.rotation + (0.001f * i), 2.f * glm::pi<float>());
+        obj.transform.rotation.y = glm::mod<float>(obj.transform.rotation.y + (0.01f * i), 2.f * glm::pi<float>());
+        obj.transform.rotation.x = glm::mod<float>(obj.transform.rotation.x + (0.05f * i), 2.f * glm::pi<float>());
     }
 
     static float time = 0.0f;
@@ -74,9 +76,9 @@ void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::v
     //  loop through every gameObject
     for(auto& gameObject : gameObjects){
         SimplePushConstantData push{};
-        push.offset = gameObject.transform2d.translation + glm::vec2(0.5f, 0.0f) * rotationMat ;
+        //push.offset = gameObject.transform2d.translation + glm::vec2(0.5f, 0.0f) * rotationMat ;
         push.color = gameObject.color; 
-        push.transform = gameObject.transform2d.mat2(); 
+        push.transform = gameObject.transform.mat4(); 
         vkCmdPushConstants(commandBuffer, myPipelineLayout,
                         VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                         0, sizeof(SimplePushConstantData), &push);

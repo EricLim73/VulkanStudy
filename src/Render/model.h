@@ -12,7 +12,7 @@ namespace VULKVULK{
 class Model{
 public:
     struct Vertex{
-        glm::vec2 position;
+        glm::vec3 position;
         glm::vec3 color;
 
         //  Return function for pipeline

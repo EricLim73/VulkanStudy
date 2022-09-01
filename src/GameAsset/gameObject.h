@@ -6,23 +6,44 @@
 
 namespace VULKVULK{
 
-struct Transform2DComponent{
-    glm::vec2 translation{};
-    glm::vec2 scale{1.0f, 1.0f};
-    float rotation;
+struct TransformComponent{
+    glm::vec3 translation{};
+    glm::vec3 scale{1.0f, 1.0f, 1.0f};
+    glm::vec3 rotation{};
 
-    glm::mat2 mat2() {
-        //                                                                                                     [X]   [O]
-        //  GLM reads in coloum not in row. => so it read "scale.x & 0.0f inside second{}" as 1st input     1| 123   14
-        //  ex> [1st row] 1 2 3 [2nd row] 4 5 6 => is not 3X2 mat, its 2X3 mat                              2| 456   25
-        //  so if you want to add z axis then you should add 1 value to each row, not adding new {}         3|       36
-        glm::mat2 scaleMat{ {scale.x, 0.0f},
-                            {0.0f, scale.y} };  //  i(1,0) is (scale.x, 0) & j(0,1) is (0, scale.y)
-        const float s = glm::sin(rotation);
-        const float c = glm::cos(rotation);
-        glm::mat2 rotationMat{{c, s}, {-s, c}};
-
-        return rotationMat * scaleMat;  // order matters
+    //  transform = scale * rotation * translation (calculate in <- direction )
+    glm::mat4 mat4(){
+        const float c3 = glm::cos(rotation.z);
+        const float s3 = glm::sin(rotation.z);
+        const float c2 = glm::cos(rotation.x);
+        const float s2 = glm::sin(rotation.x);
+        const float c1 = glm::cos(rotation.y);
+        const float s1 = glm::sin(rotation.y);
+        
+        //  Rotation uses Trait-Bryan Angle(Euler Angle)
+        auto transform = glm::mat4{
+            {   scale.x * (c1 * c3 + s1 * s2 * s3),
+                scale.x * (c2 * s3),
+                scale.x * (c1 * c2 * s3 - c3 * s1),
+                0.0f
+            },
+            {
+                scale.y * (c3 * s1 * s2 - c1 * s3),
+                scale.y * (c2 * c3),
+                scale.y * (c1 * c3 * s2 + s1 * s3),
+                0.0f
+            },
+            {
+                scale.z * (c2 * s1),
+                scale.z * (-s2),
+                scale.z * (c1 * c2),
+                0.0f
+            },
+            {   //  last value == 1.0 move vector representing points
+                translation.x, translation.y, translation.z, 1.0f   
+            }
+        };
+        return transform;
     }
 };
 
@@ -37,13 +58,13 @@ public:
     GameObject(const GameObject&) = delete;
     GameObject& operator=(const GameObject&) = delete;
     GameObject(GameObject&&) = default; //  Use move operation for moving created gameObjects to vector storing all of them inside App
-    GameObject& operator=(GameObject&&) = default;
+    GameObject& operator=(GameObject&&) = default;  
     
     id_t GetId() const {return id;}
  
     std::shared_ptr<Model> model{}; //  multiple game object can use same model -> model should be shared for convinience
     glm::vec3 color{};
-    Transform2DComponent transform2d;
+    TransformComponent transform{};
 
 private:
     GameObject(id_t objId) : id(objId) {} 
