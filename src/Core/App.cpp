@@ -17,9 +17,12 @@ App::~App(){}
 
 void App::run(){
     SimpleRenderSystem mySimpleRenderSystem(myDevice, myRenderer.GetSwapChainRenderPass());
-    Camera cam{};
-    //  NOTE:   in Vulkan, -y is top& y is bottom 
 
+    Camera cam{};
+    cam.setViewDirection(glm::vec3{0.0f}, glm::vec3{0.5f, 0.0f, 1.0f}); //  camera position in origin, facing positive Z but slightly right 
+    //cam.setViewTarget(glm::vec3{-1.0f, -2.0f, 2.0f}, glm::vec3{0.0f, 0.0f, 2.5f});  //  camera position looking at target
+
+    //  NOTE:   in Vulkan, -y is top& y is bottom 
     //  Main Loop
     while(!myWindow.shouldClose()){
         glfwPollEvents();
@@ -28,6 +31,8 @@ void App::run(){
         //  right & left being "-aspect&aspect" only if bottom & top is 1, -1 => we need [right - left] = aspect(bottom - top)
         //  ex. when [ R: aspect, L: -aspect, B: 1, T: -1 ] => aspect-(-aspect) = aspect(1-(-1)) -> is true 
         //  cam.setOrthographicProjection(-aspect, aspect, -1, 1, -1, 1); 
+        
+        
         cam.setPerspectiveProjection(glm::radians(45.0f), aspect, 0.1f, 30.0f);
 
         //  if swapChain need recreation it returns nullptr
