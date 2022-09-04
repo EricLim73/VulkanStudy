@@ -143,3 +143,27 @@
                 object rotates around fixed axis
             [follow from left->right] : Intrinsic
                 object's axis rotates  
+
+[20220903]
+    Orthographic matrix will set a space where things get drawned and transform it to clipSpace to show on screen
+    VULKAN clip Space is leftHand system, "Z" going + towards the screen & "Y" goes positive going down
+
+    for specific calculation look up video
+
+    NOTE 
+        when aspect ratio is smaller than 1 (screen Height > Width), screen drawn get clipped
+        to avoid this, For Orthographic Matrix, call param with (-1, 1, -1/aspect, 1/aspect, -1, 1)
+        For PerspectiveMatrix, go for    
+            *function to consider have an orthographic view volume of at least [left=-1, right=1, top=-1, bottom=1, near=-1, far=1]
+            ...
+            auto aspect_nominator = aspect;
+            auto aspect_denominator = 1.0f;
+            if (aspect < 1.0f) {
+                aspect_nominator = 1.0f;
+                aspect_denominator = 1 / aspect;
+            }
+            ...
+            projectionMatrix[0][0] = 1.f / (aspect_nominator * tanHalfFovy);
+            projectionMatrix[1][1] = 1.f / (aspect_denominator * tanHalfFovy);
+            ...
+        

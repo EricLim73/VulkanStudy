@@ -66,12 +66,15 @@ void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::v
     }
 
     myPipeline->bind(commandBuffer);
- 
+    
+    //  VP transform
+    auto projectionView = camera.GetProjection() * camera.GetView();
+
     //  loop through every gameObject
     for(auto& gameObject : gameObjects){
         SimplePushConstantData push{};
         push.color = gameObject.color; 
-        push.transform = camera.GetProjection() * gameObject.transform.mat4(); 
+        push.transform = projectionView * gameObject.transform.mat4(); //   MVP tranform
 
         vkCmdPushConstants(commandBuffer, myPipelineLayout,
                         VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
