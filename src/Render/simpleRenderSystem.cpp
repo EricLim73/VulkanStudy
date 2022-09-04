@@ -9,7 +9,6 @@ namespace VULKVULK{
 struct SimplePushConstantData{
     glm::mat4 transform{1.f};
     alignas(16) glm::vec3 color;    //  for color 
-    //  deleting offset bc we baked that inside gameObject struct
 }; 
 
 
@@ -57,7 +56,8 @@ void SimpleRenderSystem::createPipeline(VkRenderPass renderPass){
         pipelineConfig);
 }
 
-void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject> &gameObjects){
+//  TODO:   Most camera calculations are done inside gpu, sending perspective & translation matrix to shader using uniform buffers
+void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject> &gameObjects, const Camera& camera){
     int i = 0;
     for (auto& obj : gameObjects) {
         i += 1;
@@ -65,27 +65,21 @@ void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::v
         obj.transform.rotation.x = glm::mod<float>(obj.transform.rotation.x + (0.05f * i), 2.f * glm::pi<float>());
     }
 
-    static float time = 0.0f;
-    const float s = glm::sin(time);
-    const float c = glm::cos(time);
-    glm::mat2 rotationMat{{c, s}, {-s, c}};
-
-
     myPipeline->bind(commandBuffer);
  
     //  loop through every gameObject
     for(auto& gameObject : gameObjects){
         SimplePushConstantData push{};
-        //push.offset = gameObject.transform2d.translation + glm::vec2(0.5f, 0.0f) * rotationMat ;
         push.color = gameObject.color; 
-        push.transform = gameObject.transform.mat4(); 
+        push.transform = camera.GetProjection() * gameObject.transform.mat4(); 
+
         vkCmdPushConstants(commandBuffer, myPipelineLayout,
                         VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                         0, sizeof(SimplePushConstantData), &push);
         gameObject.model->bind(commandBuffer);
         gameObject.model->draw(commandBuffer);
     }
-    time += 0.016f;
+ 
 }
 
 }   //  namespace VULKVULK

@@ -18,6 +18,8 @@ add_executable(${PROJECT_NAME}
     src/Render/model.cpp                src/Render/model.h
     src/Render/renderer.cpp             src/Render/renderer.h
     src/Render/simpleRenderSystem.cpp   src/Render/simpleRenderSystem.h
+    src/Render/camera.cpp               src/Render/camera.h
+
 
 )
 

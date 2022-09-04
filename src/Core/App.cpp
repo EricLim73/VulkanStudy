@@ -2,6 +2,7 @@
 #include "core.h"
 
 #include "../Render/simpleRenderSystem.h"
+#include "../Render/camera.h"
 
 #include <stdexcept>
 #include <array>
@@ -16,14 +17,23 @@ App::~App(){}
 
 void App::run(){
     SimpleRenderSystem mySimpleRenderSystem(myDevice, myRenderer.GetSwapChainRenderPass());
-    
+    Camera cam{};
+    //  NOTE:   in Vulkan, -y is top& y is bottom 
+
     //  Main Loop
     while(!myWindow.shouldClose()){
         glfwPollEvents();
+        float aspect = myRenderer.GetAspectRatio();
+        //  set orthographic space as 1X1X1 cube
+        //  right & left being "-aspect&aspect" only if bottom & top is 1, -1 => we need [right - left] = aspect(bottom - top)
+        //  ex. when [ R: aspect, L: -aspect, B: 1, T: -1 ] => aspect-(-aspect) = aspect(1-(-1)) -> is true 
+        //  cam.setOrthographicProjection(-aspect, aspect, -1, 1, -1, 1); 
+        cam.setPerspectiveProjection(glm::radians(45.0f), aspect, 0.1f, 30.0f);
+
         //  if swapChain need recreation it returns nullptr
         if(auto commandBuffer = myRenderer.beginFrame()){
             myRenderer.beginSwapChainRenderPass(commandBuffer);
-            mySimpleRenderSystem.renderGameObjects(commandBuffer, myGameObjects);
+            mySimpleRenderSystem.renderGameObjects(commandBuffer, myGameObjects, cam);
             myRenderer.endSwapChainRenderPass(commandBuffer);
             myRenderer.endFrame();
         }
@@ -94,9 +104,9 @@ void App::loadGameObjects() {
 
     auto cube = GameObject::createGameObject();
     cube.model = model;
-    cube.transform.translation = {0.0f, 0.0f, 0.5f};
+    cube.transform.translation = {0.0f, 0.0f, 2.5f};
     cube.transform.scale = {0.5f, 0.5f, 0.5f};
-    
+
     myGameObjects.push_back(std::move(cube));
 }
 

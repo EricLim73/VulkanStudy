@@ -4,6 +4,7 @@
 #include "../Render/pipeline.h"
 #include "../Render/device.h" 
 #include "../GameAsset/gameObject.h"    //  -> contains model.h
+#include "../Render/camera.h"
 
 #include <memory>
 #include <vector>
@@ -17,7 +18,7 @@ class SimpleRenderSystem{
         SimpleRenderSystem(const SimpleRenderSystem&) = delete;
         SimpleRenderSystem& operator=(const SimpleRenderSystem&) = delete;
         
-        void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject> &gameObjects);    //  we will get gameObjects from app using "loadGameObjects()"
+        void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject> &gameObjects, const Camera& camera);    //  we will get gameObjects from app using "loadGameObjects()"
 
     private: 
         void createPipelineLayout();

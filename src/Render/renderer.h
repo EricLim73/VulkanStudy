@@ -37,11 +37,12 @@ class Renderer{
         }
         //  Render-SubSystem needs to access swapchain renderpass during pipeline Creation
         VkRenderPass GetSwapChainRenderPass() const {return mySwapChain->getRenderPass();}  
+        float GetAspectRatio() const {return mySwapChain->extentAspectRatio();} //  to use windows W&H ratio for perspective matrix(fix stretching)
 
     private:
         void createCommandBuffers();
         void freeCommandBuffers();
-        void recreateSwapChain(); 
+        void recreateSwapChain(); //swapchain, image, imageview, framebuffer, renderpass, depthsource, syncobject
 
         Window &myWindow;
         Device &myDevice;
