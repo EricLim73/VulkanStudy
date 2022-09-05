@@ -58,15 +58,8 @@ void SimpleRenderSystem::createPipeline(VkRenderPass renderPass){
 
 //  TODO:   Most camera calculations are done inside gpu, sending perspective & translation matrix to shader using uniform buffers
 void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject> &gameObjects, const Camera& camera){
-    int i = 0;
-    for (auto& obj : gameObjects) {
-        i += 1;
-        obj.transform.rotation.y = glm::mod<float>(obj.transform.rotation.y + (0.01f * i), 2.f * glm::pi<float>());
-        obj.transform.rotation.x = glm::mod<float>(obj.transform.rotation.x + (0.05f * i), 2.f * glm::pi<float>());
-    }
-
-    myPipeline->bind(commandBuffer);
     
+    myPipeline->bind(commandBuffer);
     //  VP transform
     auto projectionView = camera.GetProjection() * camera.GetView();
 

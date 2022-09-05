@@ -13,11 +13,13 @@ class Window{
         //  Delete copy constructor
         Window(const Window &) = delete;
         Window &operator=(const Window &) = delete;
-        //  For SwapChainExtent
+        
+        //  Getter Functions
         VkExtent2D getExtent() {return {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};}
-
         bool shouldClose() {return glfwWindowShouldClose(window);}
         bool wasFramebufferResized() const {return framebufferResized;}
+        GLFWwindow *GetWindow() const {return window;}
+
         void resetFramebufferResized() {framebufferResized = false;}
         void createWindowSurface(VkInstance instance, VkSurfaceKHR *surface);
 

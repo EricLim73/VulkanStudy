@@ -3,9 +3,11 @@
 
 #include "../Render/simpleRenderSystem.h"
 #include "../Render/camera.h"
+#include "../IO/keyboard_movement.h"
 
 #include <stdexcept>
 #include <array>
+#include <chrono>
 
 namespace VULKVULK{
 
@@ -19,20 +21,27 @@ void App::run(){
     SimpleRenderSystem mySimpleRenderSystem(myDevice, myRenderer.GetSwapChainRenderPass());
 
     Camera cam{};
-    cam.setViewDirection(glm::vec3{0.0f}, glm::vec3{0.5f, 0.0f, 1.0f}); //  camera position in origin, facing positive Z but slightly right 
-    //cam.setViewTarget(glm::vec3{-1.0f, -2.0f, 2.0f}, glm::vec3{0.0f, 0.0f, 2.5f});  //  camera position looking at target
+    //cam.setViewDirection(glm::vec3{0.0f}, glm::vec3{0.0f, 0.0f, 0.5f}); //  camera position in origin, facing positive Z but slightly right 
+    cam.setViewTarget(glm::vec3{-1.0f, -2.0f, -1.0f}, glm::vec3{0.0f, 0.0f, 0.5f});  //  camera position looking at target
 
-    //  NOTE:   in Vulkan, -y is top& y is bottom 
+    auto viewObject = GameObject::createGameObject();   //  object storing camera 
+    KeyboardMovementController cameraController{};
+    //  deltaTime
+    auto currentTime = std::chrono::high_resolution_clock::now();
+
+
     //  Main Loop
     while(!myWindow.shouldClose()){
         glfwPollEvents();
+        
+        auto newTime = std::chrono::high_resolution_clock::now();   //  call after poll time to consider events 
+        float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
+        currentTime = newTime;
+
+        cameraController.moveInPlaneXZ(myWindow.GetWindow(), frameTime, viewObject);
+        cam.setViewYXZ(viewObject.transform.translation, viewObject.transform.rotation);
+
         float aspect = myRenderer.GetAspectRatio();
-        //  set orthographic space as 1X1X1 cube
-        //  right & left being "-aspect&aspect" only if bottom & top is 1, -1 => we need [right - left] = aspect(bottom - top)
-        //  ex. when [ R: aspect, L: -aspect, B: 1, T: -1 ] => aspect-(-aspect) = aspect(1-(-1)) -> is true 
-        //  cam.setOrthographicProjection(-aspect, aspect, -1, 1, -1, 1); 
-        
-        
         cam.setPerspectiveProjection(glm::radians(45.0f), aspect, 0.1f, 30.0f);
 
         //  if swapChain need recreation it returns nullptr

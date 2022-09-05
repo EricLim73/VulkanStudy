@@ -19,6 +19,7 @@ add_executable(${PROJECT_NAME}
     src/Render/renderer.cpp             src/Render/renderer.h
     src/Render/simpleRenderSystem.cpp   src/Render/simpleRenderSystem.h
     src/Render/camera.cpp               src/Render/camera.h
+    src/IO/keyboard_movement.cpp        src/IO/keyboard_movement.h
 
 
 )
