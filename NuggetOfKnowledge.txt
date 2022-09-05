@@ -153,6 +153,12 @@
     NOTE 
         when aspect ratio is smaller than 1 (screen Height > Width), screen drawn get clipped
         to avoid this, For Orthographic Matrix, call param with (-1, 1, -1/aspect, 1/aspect, -1, 1)
+            WHY?
+                right & left being "-aspect&aspect" only if bottom & top is 1, -1 => we need [right - left] = aspect(bottom - top)
+                ex. when [ R: aspect, L: -aspect, B: 1, T: -1 ] => aspect-(-aspect) = aspect(1-(-1)) -> is true 
+                cam.setOrthographicProjection(-aspect, aspect, -1, 1, -1, 1); 
+
+
         For PerspectiveMatrix, go for    
             *function to consider have an orthographic view volume of at least [left=-1, right=1, top=-1, bottom=1, near=-1, far=1]
             ...
