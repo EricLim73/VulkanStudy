@@ -9,11 +9,11 @@ public:
     void setOrthographicProjection(float left, float right, float top, float bottom, float near, float far );
     void setPerspectiveProjection(float fov, float aspect, float near, float far);
 
-    //  Camera facing direction 
+    //  Fixed Camera facing direction 
     void setViewDirection(glm::vec3 position, glm::vec3 direction, glm::vec3 up = glm::vec3{0.0f, -1.0f, 0.0f});
-    //  Fixed Camera
+    //  Fixed Camera facing target point
     void setViewTarget(glm::vec3 position, glm::vec3 target, glm::vec3 up = glm::vec3{0.0f, -1.0f, 0.0f});
-    //  specify camera orientation
+    //  specify camera orientation + position
     void setViewYXZ(glm::vec3 position, glm::vec3 rotation);
 
     const glm::mat4& GetProjection() const {return projectionMatrix;}

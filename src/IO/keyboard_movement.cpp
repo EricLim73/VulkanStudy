@@ -11,7 +11,7 @@ void KeyboardMovementController::moveInPlaneXZ(GLFWwindow* window, float dt, Gam
     if(glfwGetKey(window, keys.lookUp) == GLFW_PRESS) rotate.x += 1.f;
     if(glfwGetKey(window, keys.lookDown) == GLFW_PRESS) rotate.x -= 1.f;
 
-    //  dot to itself to check if its non-zero -> normalizing zero is gonna fuck up equation 
+    //  dot to itself(size of vector) to check if its non-zero -> normalizing zero is gonna fuck up equation 
     //      + epsilon to avoid comparing float value directly with zero
     if(glm::dot(rotate, rotate) > std::numeric_limits<float>::epsilon()){
         //  normalize to match speed for diagnal looking(normalize == direction)

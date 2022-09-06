@@ -23,8 +23,8 @@ void App::run(){
     Camera cam{};
     //cam.setViewDirection(glm::vec3{0.0f}, glm::vec3{0.0f, 0.0f, 0.5f}); //  camera position in origin, facing positive Z but slightly right 
     //cam.setViewTarget(glm::vec3{-1.0f, -2.0f, -1.0f}, glm::vec3{0.0f, 0.0f, 0.5f});  //  camera position looking at target
-
     auto viewObject = GameObject::createGameObject();   //  object storing camera 
+
     KeyboardMovementController cameraController{};
     //  deltaTime
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -38,9 +38,10 @@ void App::run(){
         float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
         currentTime = newTime;
 
+        //  View Transform
         cameraController.moveInPlaneXZ(myWindow.GetWindow(), frameTime, viewObject);
         cam.setViewYXZ(viewObject.transform.translation, viewObject.transform.rotation);
-
+        //  Projection Transform
         float aspect = myRenderer.GetAspectRatio();
         cam.setPerspectiveProjection(glm::radians(45.0f), aspect, 0.1f, 30.0f);
 

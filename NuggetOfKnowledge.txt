@@ -172,4 +172,10 @@
             projectionMatrix[0][0] = 1.f / (aspect_nominator * tanHalfFovy);
             projectionMatrix[1][1] = 1.f / (aspect_denominator * tanHalfFovy);
             ...
-        
+
+[20220905]
+        Delta Time is important for freshRate independent application -> with presentation modes relying on freshRate, 
+    without deltaTime speed of motion + various operation will be different for every machines
+    The basic implementation would be using "#include <chrono>" and record 2 timestamp and subtracting them resulting deltaTime that we can use.
+
+    
