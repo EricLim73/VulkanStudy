@@ -22,7 +22,7 @@ void App::run(){
 
     Camera cam{};
     //cam.setViewDirection(glm::vec3{0.0f}, glm::vec3{0.0f, 0.0f, 0.5f}); //  camera position in origin, facing positive Z but slightly right 
-    cam.setViewTarget(glm::vec3{-1.0f, -2.0f, -1.0f}, glm::vec3{0.0f, 0.0f, 0.5f});  //  camera position looking at target
+    //cam.setViewTarget(glm::vec3{-1.0f, -2.0f, -1.0f}, glm::vec3{0.0f, 0.0f, 0.5f});  //  camera position looking at target
 
     auto viewObject = GameObject::createGameObject();   //  object storing camera 
     KeyboardMovementController cameraController{};

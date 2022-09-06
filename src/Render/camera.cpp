@@ -61,6 +61,7 @@ void Camera::setViewTarget(glm::vec3 position, glm::vec3 target, glm::vec3 up) {
     setViewDirection(position, target - position, up);
 }
 
+//  camera movement & rotation -> Trait-Bryan Euler Angle YXZ
 void Camera::setViewYXZ(glm::vec3 position, glm::vec3 rotation) {
     const float c3 = glm::cos(rotation.z);
     const float s3 = glm::sin(rotation.z);
