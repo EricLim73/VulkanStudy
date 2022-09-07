@@ -5,13 +5,19 @@
 
 namespace VULKVULK{
 
-Model::Model(Device& _device, const std::vector<Vertex>& vertices) : device(_device){
-    createVertexBuffers(vertices);
+Model::Model(Device& _device, const Model::bufferData& bData) : device(_device){
+    createVertexBuffers(bData.vertices);
+    createIndexBuffer(bData.indices);
 }
 
 Model::~Model(){
-    vkDestroyBuffer(device.device(), vertexBuffer, nullptr);
+    vkDestroyBuffer(device.device(), vertexBuffer, nullptr);   
     vkFreeMemory(device.device(), vertexBufferMemory, nullptr);
+    if(hasIndexBuffer){
+        vkDestroyBuffer(device.device(), indexBuffer, nullptr);
+        vkFreeMemory(device.device(), indexBufferMemory, nullptr);
+    }
+
 }
     
 void Model::createVertexBuffers(const std::vector<Vertex>& vertices){
@@ -20,25 +26,79 @@ void Model::createVertexBuffers(const std::vector<Vertex>& vertices){
     assert(vertexCount >= 3 && "Vertex count must be at least 3!");
 
     VkDeviceSize bufferSize = sizeof(vertices[0]) * vertexCount;  //  bufferSize = sizeof 1 vertex * totalnumber
-    //  HOST = CPU & DEVICE = GPU => HOST_VISIBLE will set vertex data accessible through cpu
-    //                            => HOST_COHERENT wil keeps HOST&DEVIEC region consistent -> without this flag u need another way to keep coherency
+    
+    //  previous cpu memory mapping data to cpu writable gpu memory is slow
+    //  So we make a staging buffer that takes the cpu data and sends that to GPU specific memory space which is way faster
+    VkBuffer stagingBuffer; 
+    VkDeviceMemory stagingBufferMemory;
     device.createBuffer(
         bufferSize,
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,  
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,   //  Tell vullkan this buffer is used as src for memory transfer  
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        vertexBuffer, vertexBufferMemory );
-
+        stagingBuffer, stagingBufferMemory );
+    //  First copy data to staging buffer
     void* data;
-    //  link HOST cpu "data" memory address to DEVICE gpu "vertexBufferMemoryz"
-    vkMapMemory(device.device(), vertexBufferMemory, 0, bufferSize, 0, &data);
-    //  copy vertices data to "data" -> bc of "COHERENT" bit, automaitcally GPU memory has this data
-    //       -> transfer does not happen right now, it happens at backGround but is guaranteed to be completed after next "VkQueueSubmit()" 
+    vkMapMemory(device.device(), stagingBufferMemory, 0, bufferSize, 0, &data);
     memcpy(data, vertices.data(), static_cast<uint32_t>(bufferSize)); 
-    vkUnmapMemory(device.device(), vertexBufferMemory); //  unlink data with gpu data
+    vkUnmapMemory(device.device(), stagingBufferMemory); //  unlink data with gpu data
+    
+    //  create vertex buffer(Device memory)
+    device.createBuffer(
+        bufferSize,
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,   //    Tell vullkan this buffer is used as dst for memory transfer
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        vertexBuffer, vertexBufferMemory);
+    //  copy data from staging buffer to Device Memory
+    device.copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+    //  After copying we dont need staging buffer anymore so we delete it
+    vkDestroyBuffer(device.device(), stagingBuffer, nullptr);   
+    vkFreeMemory(device.device(), stagingBufferMemory, nullptr);
 }
 
+void Model::createIndexBuffer(const std::vector<uint32_t>& indices){
+    indexCount = static_cast<uint32_t>(indices.size());
+    hasIndexBuffer = indexCount > 0;    //  true when there is 1 or more index value
+    
+    if(!hasIndexBuffer){
+        return;
+    }
+    
+    VkDeviceSize bufferSize = sizeof(indices[0]) * indexCount;  
+
+    VkBuffer stagingBuffer; 
+    VkDeviceMemory stagingBufferMemory;
+    device.createBuffer(
+        bufferSize,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,   //  Tell vullkan this buffer is used as src for memory transfer  
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        stagingBuffer, stagingBufferMemory );
+
+    void* data;
+    vkMapMemory(device.device(), stagingBufferMemory, 0, bufferSize, 0, &data);
+    memcpy(data, indices.data(), static_cast<uint32_t>(bufferSize)); 
+    vkUnmapMemory(device.device(), stagingBufferMemory); //  unlink data with gpu data
+
+    device.createBuffer(
+        bufferSize,
+        VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,  
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        indexBuffer, indexBufferMemory );
+        
+    //  copy data from staging buffer to Device Memory
+    device.copyBuffer(stagingBuffer, indexBuffer, bufferSize);
+
+    vkDestroyBuffer(device.device(), stagingBuffer, nullptr);   
+    vkFreeMemory(device.device(), stagingBufferMemory, nullptr);
+}
+
+
 void Model::draw(VkCommandBuffer commandBuffer){
-   vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0); 
+    if(hasIndexBuffer){
+        vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
+    }
+    else{
+        vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0); 
+    }
 }
 
 void Model::bind(VkCommandBuffer commandBuffer){
@@ -47,6 +107,10 @@ void Model::bind(VkCommandBuffer commandBuffer){
     //  record to commandBuffer to bind 
     //  [i]th value of "buffer"&"offset" to binding-index["first_binding" + i]
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
+    if(hasIndexBuffer){
+        // VK_INDEX_TYPE should match indices vector type OR represents total vertices that can be represented (2^16-1 || 2^32-1)
+        vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32); 
+    }
 }
 
 //  INFO:   [Pipeline] Need to provide pipeline with these descriptions -> inside "VkPipelineVertexInputStateCreateInfo"

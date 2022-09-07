@@ -86,6 +86,7 @@ VkResult SwapChain::submitCommandBuffers(const VkCommandBuffer *buffers, uint32_
     if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE) {
       vkWaitForFences(device.device(), 1, &imagesInFlight[*imageIndex], VK_TRUE, UINT64_MAX);
     }
+    
     imagesInFlight[*imageIndex] = inFlightFences[currentFrame];
     
     //  set for render -> set semaphore to tell when its done(=can present) and tell its ok to fetch next image with returned fence 
