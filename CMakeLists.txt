@@ -8,7 +8,7 @@ find_package(Vulkan REQUIRED)
 project(${PROJECT_NAME})
 add_executable(${PROJECT_NAME} 
     VulkApp/main.cpp
-    src/Core/core.h  
+    src/Core/core.h                     src/Core/utils.h  
     src/Core/App.cpp                    src/Core/App.h
     src/GameAsset/gameObject.cpp        src/GameAsset/gameObject.h
     src/Render/window.cpp               src/Render/window.h

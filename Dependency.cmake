@@ -32,7 +32,7 @@ ExternalProject_Add(
         -DGLFW_BUILD_EXAMPLES=OFF
         -DGLFW_BUILD_TESTS=OFF
         -DGLFW_BUILD_DOCS=OFF
-    )
+)
 set(DEP_LIST ${DEP_LIST} dep_glfw)
 set(DEP_LIBS ${DEP_LIBS} glfw3)
 
@@ -50,24 +50,37 @@ ExternalProject_Add(
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy
         ${PROJECT_BINARY_DIR}/dep_stb-prefix/src/dep_stb/stb_image.h
         ${DEP_INSTALL_DIR}/include/stb/stb_image.h
-    )
+)
 set(DEP_LIST ${DEP_LIST} dep_stb)
 # stb is header only, so no need for adding in DEP_LIBS
 
 # glm
 ExternalProject_Add(
-  dep_glm
-  GIT_REPOSITORY "https://github.com/g-truc/glm"
-  GIT_TAG "0.9.9.8"
-  GIT_SHALLOW 1
-  UPDATE_COMMAND ""
-  PATCH_COMMAND ""
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
-  TEST_COMMAND ""
-  INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${PROJECT_BINARY_DIR}/dep_glm-prefix/src/dep_glm/glm
-    ${DEP_INSTALL_DIR}/include/glm
-  )
+    dep_glm
+    GIT_REPOSITORY "https://github.com/g-truc/glm"
+    GIT_TAG "0.9.9.8"
+    GIT_SHALLOW 1
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    TEST_COMMAND ""
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory
+      ${PROJECT_BINARY_DIR}/dep_glm-prefix/src/dep_glm/glm
+      ${DEP_INSTALL_DIR}/include/glm
+)
 set(DEP_LIST ${DEP_LIST} dep_glm)
 # glm is header only, so no need for adding in DEP_LIBS
+
+# tinyOBJloader
+ExternalProject_Add(
+    dep_tinyObjLoader
+    GIT_REPOSITORY "https://github.com/tinyobjloader/tinyobjloader"
+    GIT_TAG "master"
+    GIT_SHALLOW 1
+    UPDATE_COMMAND "" PATCH_COMMAND "" TEST_COMMAND ""
+    CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${DEP_INSTALL_DIR}
+)
+set(DEP_LIST ${DEP_LIST} dep_tinyObjLoader)
+set(DEP_LIBS ${DEP_LIBS} tinyObjLoader)

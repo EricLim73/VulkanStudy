@@ -1,7 +1,27 @@
 #include "model.h"
+#include "../Core/utils.h"
+
+#define TINYOBJLOADER_IMPLMENTATION 
+#include <tiny_obj_loader.h> 
+
+//  to make a hashing function for our Vertex struct, we need to enable this -> to hash individual vec component
+//  though experimental, it is considered safe
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
 
 #include <cassert>
 #include <cstring>
+#include <iostream>
+#include <unordered_map>    //  chech for duplicate vertex data => if same dont save in vertex but save index id to indices
+
+template <>
+struct std::hash<VULKVULK::Model::Vertex>{
+    size_t operator()(VULKVULK::Model::Vertex const &vertex) const {
+        size_t seed = 0;
+        VULKVULK::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
+        return seed;
+    }
+};
 
 namespace VULKVULK{
 
@@ -19,7 +39,14 @@ Model::~Model(){
     }
 
 }
-    
+
+std::unique_ptr<Model> Model::createModelFromFile(Device& device, const std::string& filepath){
+    bufferData bData{};
+    bData.loadModel(filepath);
+    std::cout << "Vertex Count : " << bData.vertices.size() << "\n";
+    return std::make_unique<Model>(device, bData);
+}
+
 void Model::createVertexBuffers(const std::vector<Vertex>& vertices){
     vertexCount = static_cast<uint32_t>(vertices.size());
     //  assert to check vertexCount is at least 3 (to form basic shape)
@@ -91,7 +118,6 @@ void Model::createIndexBuffer(const std::vector<uint32_t>& indices){
     vkFreeMemory(device.device(), stagingBufferMemory, nullptr);
 }
 
-
 void Model::draw(VkCommandBuffer commandBuffer){
     if(hasIndexBuffer){
         vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
@@ -118,7 +144,7 @@ void Model::bind(VkCommandBuffer commandBuffer){
 std::vector<VkVertexInputBindingDescription> Model::Vertex::getBindingDescriptions(){
     std::vector<VkVertexInputBindingDescription> bindingDescription(1);
     bindingDescription[0].binding = 0;  //  for binding index "0"
-    bindingDescription[0].stride = sizeof(Vertex);  //  read size of Vertex as 1 item
+    bindingDescription[0].stride = sizeof(Vertex);  //  read size of Vertex as 1 item => currently bind0 has pos&color data
     bindingDescription[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
     return bindingDescription;
 //  you can also return 
@@ -141,6 +167,68 @@ std::vector<VkVertexInputAttributeDescription> Model::Vertex::getAttributeDescri
 }
 
 
+
+void Model::bufferData::loadModel(const std::string &filepath){
+    tinyobj::attrib_t attrib;   //  has all the obj data
+    std::vector<tinyobj::shape_t> shapes;   //  contains index data for mesh(vertex,index,textureCoord)
+    std::vector<tinyobj::material_t> materials; // contains index data for texture(image, albedo,...)
+    std::string warn ,err;
+    //  LoadObj need components as address to vector, not the fisrt starting address
+    //  (which is just the address pointing towards 1 element and no connection with the rest of the container)
+
+    if(!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filepath.c_str())){
+        throw std::runtime_error(warn + err);
+    }
+
+    vertices.clear();
+    indices.clear();
+
+    std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+
+    for(const auto &shape : shapes){
+        for(const auto &index : shape.mesh.indices){
+            Vertex vertex{};
+            if(index.vertex_index >= 0){
+                vertex.position = {
+                    attrib.vertices[3 * index.vertex_index + 0],
+                    attrib.vertices[3 * index.vertex_index + 1],
+                    attrib.vertices[3 * index.vertex_index + 2]
+                };                
+                auto colorIndex = 3 * index.vertex_index + 2;   //  bc color data is optional we can check if modelData contains it or not 
+                if(colorIndex < attrib.colors.size()){  //  instead of cmp with "2", we cmp with colorIndex(first item inside index may point towards other than vertex[0])
+                    vertex.color = {
+                        attrib.colors[colorIndex - 2],
+                        attrib.colors[colorIndex - 1],
+                        attrib.colors[colorIndex - 0]
+                    };
+                }    
+                else{
+                    vertex.color = {1.0f, 1.0f, 1.0f};
+                }
+            }
+            if(index.normal_index >= 0){
+                vertex.normal = {
+                    attrib.normals[3 * index.normal_index + 0],
+                    attrib.normals[3 * index.normal_index + 1],
+                    attrib.normals[3 * index.normal_index + 2]
+                };                
+            }
+            if(index.texcoord_index >= 0){
+                vertex.uv = {
+                    attrib.texcoords[2 * index.texcoord_index + 0],
+                    attrib.texcoords[2 * index.texcoord_index + 1]
+                };                
+            }
+            //  insert added vertex
+            if(uniqueVertices.count(vertex) == 0){
+                uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+                vertices.push_back(vertex);
+            }
+            indices.push_back(uniqueVertices[vertex]);
+        }
+    }
+ 
+}
 
 
 }

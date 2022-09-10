@@ -5,6 +5,7 @@
 #include "../core/core.h" 
 
 #include <vector>
+#include <memory>
 
 namespace VULKVULK{
 
@@ -12,17 +13,26 @@ namespace VULKVULK{
 class Model{
 public:
     struct Vertex{
-        glm::vec3 position;
-        glm::vec3 color;
+        glm::vec3 position{};
+        glm::vec3 color{};
+        glm::vec3 normal{};
+        glm::vec2 uv{};
 
         //  Return function for pipeline
         static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
         static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
+
+        bool operator==(const Vertex& other) const {
+            return position == other.position && color == other.color && normal == other.normal && uv == other.uv;
+        }
     };
     struct bufferData{
         std::vector<Vertex> vertices{};
         std::vector<uint32_t> indices{};
+
+        void loadModel(const std::string &filepath);
     };
+
     Model(Device& _device, const Model::bufferData& bData);
     ~Model();
     
@@ -33,6 +43,9 @@ public:
     void bind(VkCommandBuffer commandBuffer);
     //  same as Draw call in opengl
     void draw(VkCommandBuffer commandBuffer);
+
+    //  helper function
+    static std::unique_ptr<Model> createModelFromFile(Device& device, const std::string& filepath);
 
 private:
     void createVertexBuffers(const std::vector<Vertex>& vertices);
