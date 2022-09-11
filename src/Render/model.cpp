@@ -1,9 +1,9 @@
 #include "model.h"
 #include "../Core/utils.h"
 
-#define TINYOBJLOADER_IMPLMENTATION 
-#include <tiny_obj_loader.h> 
 
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
 //  to make a hashing function for our Vertex struct, we need to enable this -> to hash individual vec component
 //  though experimental, it is considered safe
 #define GLM_ENABLE_EXPERIMENTAL
@@ -15,12 +15,12 @@
 #include <unordered_map>    //  chech for duplicate vertex data => if same dont save in vertex but save index id to indices
 
 template <>
-struct std::hash<VULKVULK::Model::Vertex>{
-    size_t operator()(VULKVULK::Model::Vertex const &vertex) const {
-        size_t seed = 0;
-        VULKVULK::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
-        return seed;
-    }
+struct std::hash<VULKVULK::Model::Vertex> {
+  size_t operator()(VULKVULK::Model::Vertex const &vertex) const {
+    size_t seed = 0;
+    VULKVULK::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
+    return seed;
+  }
 };
 
 namespace VULKVULK{
@@ -43,6 +43,7 @@ Model::~Model(){
 std::unique_ptr<Model> Model::createModelFromFile(Device& device, const std::string& filepath){
     bufferData bData{};
     bData.loadModel(filepath);
+    
     std::cout << "Vertex Count : " << bData.vertices.size() << "\n";
     return std::make_unique<Model>(device, bData);
 }
@@ -193,18 +194,14 @@ void Model::bufferData::loadModel(const std::string &filepath){
                     attrib.vertices[3 * index.vertex_index + 0],
                     attrib.vertices[3 * index.vertex_index + 1],
                     attrib.vertices[3 * index.vertex_index + 2]
-                };                
-                auto colorIndex = 3 * index.vertex_index + 2;   //  bc color data is optional we can check if modelData contains it or not 
-                if(colorIndex < attrib.colors.size()){  //  instead of cmp with "2", we cmp with colorIndex(first item inside index may point towards other than vertex[0])
-                    vertex.color = {
-                        attrib.colors[colorIndex - 2],
-                        attrib.colors[colorIndex - 1],
-                        attrib.colors[colorIndex - 0]
-                    };
-                }    
-                else{
-                    vertex.color = {1.0f, 1.0f, 1.0f};
-                }
+                };              
+                //  attrib.color is filled with 1's + same size as vertex if not existing  
+                vertex.color = {
+                    //  fetch the color data matching the vertex 
+                    attrib.colors[3 * index.vertex_index + 0],
+                    attrib.colors[3 * index.vertex_index + 1],
+                    attrib.colors[3 * index.vertex_index + 2]
+                };   
             }
             if(index.normal_index >= 0){
                 vertex.normal = {
