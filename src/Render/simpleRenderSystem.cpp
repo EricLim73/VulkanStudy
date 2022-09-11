@@ -8,7 +8,8 @@ namespace VULKVULK{
 //  Push Constant -> PushConstant & Uniform(and some other data type) in vulkan need to follow alignment rules
 struct SimplePushConstantData{
     glm::mat4 transform{1.f};
-    alignas(16) glm::vec3 color;    //  for color 
+    glm::mat4 modelMatrix{1.f};
+
 }; 
 
 
@@ -66,8 +67,9 @@ void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::v
     //  loop through every gameObject
     for(auto& gameObject : gameObjects){
         SimplePushConstantData push{};
-        push.color = gameObject.color; 
-        push.transform = projectionView * gameObject.transform.mat4(); //   MVP tranform
+        auto modelMatrix = gameObject.transform.mat4();
+        push.transform = projectionView * modelMatrix; //   MVP tranform
+        push.modelMatrix = modelMatrix; 
 
         vkCmdPushConstants(commandBuffer, myPipelineLayout,
                         VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,

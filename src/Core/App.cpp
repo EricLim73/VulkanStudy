@@ -118,11 +118,11 @@ std::unique_ptr<Model> createCubeModel(Device& device, glm::vec3 offset) {
 
 void App::loadGameObjects() {
     //std::shared_ptr<Model> model = createCubeModel(myDevice, {0.0f, 0.0f, 0.0f});
-    std::shared_ptr<Model> model = Model::createModelFromFile(myDevice, "./src/GameAsset/Models/smooth_vase.obj");//colored_cube
+    std::shared_ptr<Model> model = Model::createModelFromFile(myDevice, "./src/GameAsset/Models/flat_vase.obj");//colored_cube
    
     auto gameObj = GameObject::createGameObject();
     gameObj.model = model;
-    gameObj.transform.translation = {0.0f, 0.0f, 2.5f};
+    gameObj.transform.translation = {0.0f, 0.0f, 2.5f}; //  model transform(modelSpace -> worldSpace)
     gameObj.transform.scale = {0.5f, 0.5f, 0.5f};
 
 
