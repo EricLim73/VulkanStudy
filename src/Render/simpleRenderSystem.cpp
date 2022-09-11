@@ -69,7 +69,7 @@ void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::v
         SimplePushConstantData push{};
         auto modelMatrix = gameObject.transform.mat4();
         push.transform = projectionView * modelMatrix; //   MVP tranform
-        push.modelMatrix = modelMatrix; 
+        push.modelMatrix = gameObject.transform.normalMatrix(); //  glm automatically converts mat3 to mat4
 
         vkCmdPushConstants(commandBuffer, myPipelineLayout,
                         VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,

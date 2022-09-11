@@ -118,15 +118,31 @@ std::unique_ptr<Model> createCubeModel(Device& device, glm::vec3 offset) {
 
 void App::loadGameObjects() {
     //std::shared_ptr<Model> model = createCubeModel(myDevice, {0.0f, 0.0f, 0.0f});
-    std::shared_ptr<Model> model = Model::createModelFromFile(myDevice, "./src/GameAsset/Models/flat_vase.obj");//colored_cube
    
-    auto gameObj = GameObject::createGameObject();
-    gameObj.model = model;
-    gameObj.transform.translation = {0.0f, 0.0f, 2.5f}; //  model transform(modelSpace -> worldSpace)
-    gameObj.transform.scale = {0.5f, 0.5f, 0.5f};
+    std::shared_ptr<Model> model = Model::createModelFromFile(myDevice, "./src/GameAsset/Models/flat_vase.obj");//colored_cube
+    auto flat_vase = GameObject::createGameObject();
+    flat_vase.model = model;
+    flat_vase.transform.translation = {-1.5f, .5f, 2.5f}; //  model transform(modelSpace -> worldSpace)
+    flat_vase.transform.scale = {3.f, 1.5f, 3.f};
+    
+   
+    std::shared_ptr<Model> model1 = Model::createModelFromFile(myDevice, "./src/GameAsset/Models/smooth_vase.obj");//colored_cube
+    auto smooth_vase = GameObject::createGameObject();
+    smooth_vase.model = model1;
+    smooth_vase.transform.translation = {1.5f, .5f, 2.5f}; //  model transform(modelSpace -> worldSpace)
+    smooth_vase.transform.scale = {3.f, 1.5f, 3.f};
 
+   
+    std::shared_ptr<Model> model2 = Model::createModelFromFile(myDevice, "./src/GameAsset/Models/backpack/backpack.obj");//colored_cube
+    auto famine = GameObject::createGameObject();
+    famine.model = model2;
+    famine.transform.translation = {.5f, .5f, 5.5f}; //  model transform(modelSpace -> worldSpace)
+    famine.transform.scale = {1.f, 1.f, 1.f};
 
-    myGameObjects.push_back(std::move(gameObj));
+    myGameObjects.push_back(std::move(flat_vase));
+    myGameObjects.push_back(std::move(smooth_vase));
+    myGameObjects.push_back(std::move(famine));
+
 
 }
 
