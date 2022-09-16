@@ -8,7 +8,7 @@ namespace VULKVULK{
 //  Push Constant -> PushConstant & Uniform(and some other data type) in vulkan need to follow alignment rules
 struct SimplePushConstantData{
     glm::mat4 transform{1.f};
-    glm::mat4 modelMatrix{1.f};
+    glm::mat4 modelMatrix{1.f}; //  even though we need mat3, we're passing mat4 bc of alignment rulse
 
 }; 
 

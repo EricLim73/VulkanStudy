@@ -48,6 +48,8 @@ std::unique_ptr<Model> Model::createModelFromFile(Device& device, const std::str
     return std::make_unique<Model>(device, bData);
 }
 
+//  Staging buffer is useful for static objects inside renderer, if object tends to frequently get updated, 
+//  staging buffer might slow the rendering process
 void Model::createVertexBuffers(const std::vector<Vertex>& vertices){
     vertexCount = static_cast<uint32_t>(vertices.size());
     //  assert to check vertexCount is at least 3 (to form basic shape)
